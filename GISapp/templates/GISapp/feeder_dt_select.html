@@ -1,0 +1,89 @@
+{% extends "GISapp/base.html" %}
+{% block title %}DTs List{% endblock %}
+{% block style %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">Feeder and DT Selection</h2>
+
+
+<form method="post" id="selectForm" class="form-inline justify-content-center mb-3">
+    {% csrf_token %}
+    
+    <select name="feeder" id="feeder" {% if var_value == 'Y' %} disabled {% endif %}  class="form-control mr-2" required>
+        <option value="">--Select Feeder--</option>
+        {% for f in feeders %}
+            <option value="{{ f.id }}" {% if f.id == selected_feeder_id %} selected {% endif %}>{{ f.name }}</option>
+        {% endfor %}
+    </select>
+
+    
+    <select name="dt" id="dt" {% if var_value == 'Y' %} disabled {% endif %}  class="form-control mr-2" required>
+        <option value="">--Select DT--</option>
+        {% for dt in dts %}
+            <option value="{{ dt.id }}" {% if dt.id == selected_dt_id %} selected {% endif %}>{{ dt.name }} ({{ dt.capacity }} kVA)</option>
+        {% endfor %}
+    </select>
+
+    <button type="submit" class="btn btn-primary" name="set_reset" id="setResetButton">
+        {% if var_value == 'Y' %} RESET {% else %} SET {% endif %}
+    </button>
+</form>
+
+{% if var_value == 'Y' %}
+<hr />
+<!-- Form to input StartPoint and EndPoint -->
+<div container class="mt-4">
+<form method="post" id="coordsForm" class=" justify-content-center mb-3">
+    {% csrf_token %}
+    <input type="hidden" name="feeder" value="{{ selected_feeder_id }}">
+    <input type="hidden" name="dt" value="{{ selected_dt_id }}">
+
+    <label>StartPoint Latitude:</label>
+    <input type="number" step="0.000001" name="start_lat" required />
+    <label>StartPoint Longitude:</label>
+    <input type="number" step="0.000001" name="start_lng" required />
+
+    <br/><br/>
+
+    <label>EndPoint Latitude:</label>
+    <input type="number" step="0.000001" name="end_lat" required />
+    <label>EndPoint Longitude:</label>
+    <input type="number" step="0.000001" name="end_lng" required />
+
+    <br/><br/>
+    <button type="submit" name="submit_coords">Submit</button>
+</form>
+</div>
+</div>
+{% endif %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+// Fetch DTs dynamically when feeder changes (only if variable is 'N')
+$('#feeder').change(function() {
+    var feederId = $(this).val();
+    if (!feederId) {
+        $('#dt').html('<option value="">--Select DT--</option>');
+        return;
+    }
+    $.ajax({
+        url: "{% url 'ajax_get_dts' %}",
+        data: {
+            'feeder_id': feederId
+        },
+        dataType: 'json',
+        success: function(data) {
+            let options = '<option value="">--Select DT--</option>';
+            $.each(data, function(index, dt) {
+                options += `<option value="${dt.id}">${dt.name} (${dt.capacity} kVA)</option>`;
+            });
+            $('#dt').html(options);
+        }
+    });
+});
+</script>
+
+{% endblock %}
