@@ -2,39 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}{%endblock%}</title>
-    {% block style %}{%endblock%}
+    <meta name="viewport" content="width=device-width, initial-scale=1">  <!-- Add this -->
+    <title>{% block title %}{% endblock %}</title>
+    {% block style %}{% endblock %}
 </head>
 <body>
-    <!-- Navigation Bar -->
+    
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <!-- Left side: Navigation buttons -->
-            <div class="collapse navbar-collapse">
+            
+
+            <!-- Toggler button (for iPhone/mobile) -->
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Collapsible links -->
+            <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mr-auto">
                     <li class="nav-item"><a class="nav-link" href="{% url 'home' %}">Main</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'feeder_list' %}">Feeders</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'dt_list' %}">DTs</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'location_form' %}">Read GIS Data</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'feeder_dt_select' %}">GPS Data Entry</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'feeder_dt_select' %}">DT-circuit Data Entry</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'show_feeder_dt_data' %}">View GIS</a></li>
                 </ul>
             </div>
-
-            <!-- Center: App Title -->
-            <span class="navbar-text mx-auto text-white font-weight-bold">
-                GIS - APP
-            </span>
+            <!-- Brand / Title -->
+            <a class="navbar-brand" href="{% url 'home' %}">GIS - APP</a>
         </div>
     </nav>
 
     <!-- Page Content -->
-    
-    {% block form %}
-        <!-- Child templates will insert their content here -->
-    {% endblock %}
-    {% block content %}
-        <!-- Child templates will insert their content here -->
-    {% endblock %}
+    {% block form %}{% endblock %}
+    {% block content %}{% endblock %}
+
+    <!-- Add Bootstrap JS + Popper -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
