@@ -72,46 +72,40 @@ def location_form(request):
 
 # Create your views here.
 def feeder_dt_select(request):
-    # Variable stored in session to remember state 'N' or 'Y'
     var_value = request.session.get('var_value', 'N')
-
     feeders = Feeder.objects.all()
-
     selected_feeder_id = request.session.get('selected_feeder_id')
     selected_dt_id = request.session.get('selected_dt_id')
-
-    # For the dropdown options based on the selected feeder (if any)
     dts = DT.objects.filter(feeder_id=selected_feeder_id) if selected_feeder_id else DT.objects.none()
 
     if request.method == "POST":
         if 'set_reset' in request.POST:
-            # Handle SET/RESET button toggle
             if var_value == 'N':
-                # Set var to Y and save selected feeder and dt in session
                 feeder_id = request.POST.get('feeder')
                 dt_id = request.POST.get('dt')
-
                 if feeder_id and dt_id:
                     request.session['var_value'] = 'Y'
                     request.session['selected_feeder_id'] = feeder_id
                     request.session['selected_dt_id'] = dt_id
+                else:
+                    request.session['var_value'] = 'N'
+                    request.session['selected_feeder_id'] = None
+                    request.session['selected_dt_id'] = None
             else:
-                # RESET: clear the saved values
+                # Reset when var_value = 'Y'
                 request.session['var_value'] = 'N'
                 request.session['selected_feeder_id'] = None
                 request.session['selected_dt_id'] = None
-
             return redirect('feeder_dt_select')
 
         elif 'submit_coords' in request.POST:
-            # Handle form submission of StartPoint and EndPoint
+            feeder_id = request.session.get('selected_feeder_id')
+            dt_id = request.session.get('selected_dt_id')
+
             start_lat = request.POST.get('start_lat')
             start_lng = request.POST.get('start_lng')
             end_lat = request.POST.get('end_lat')
             end_lng = request.POST.get('end_lng')
-
-            feeder_id = request.session.get('selected_feeder_id')
-            dt_id = request.session.get('selected_dt_id')
 
             if feeder_id and dt_id and start_lat and start_lng and end_lat and end_lng:
                 feeder = Feeder.objects.get(id=feeder_id)
@@ -122,16 +116,9 @@ def feeder_dt_select(request):
                     start_point_lat=start_lat,
                     start_point_lng=start_lng,
                     end_point_lat=end_lat,
-                    end_point_lng=end_lng
+                    end_point_lng=end_lng,
                 )
-                # After submit, reset start/end point inputs by clearing POST fields (handled in template)
             return redirect('feeder_dt_select')
-
-    var_value = request.session.get('var_value', 'N')
-    selected_feeder_id = request.session.get('selected_feeder_id')
-    selected_dt_id = request.session.get('selected_dt_id')
-
-    dts = DT.objects.filter(feeder_id=selected_feeder_id) if selected_feeder_id else DT.objects.none()
 
     context = {
         'feeders': feeders,
@@ -141,6 +128,7 @@ def feeder_dt_select(request):
         'selected_dt_id': int(selected_dt_id) if selected_dt_id else None,
     }
     return render(request, 'GISapp/feeder_dt_select.html', context)
+
 
 
 # AJAX view to get DTs for a feeder (called on feeder dropdown change)
