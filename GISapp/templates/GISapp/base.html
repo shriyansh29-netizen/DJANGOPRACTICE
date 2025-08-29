@@ -7,11 +7,10 @@
     {% block style %}{% endblock %}
 </head>
 <body>
-    
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            
+         
 
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">      
             <!-- Toggler button (for iPhone/mobile) -->
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
                     aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -27,10 +26,10 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'feeder_dt_select' %}">DT-circuit Data Entry</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'show_feeder_dt_data' %}">View GIS</a></li>
                 </ul>
-            </div>
-            <!-- Brand / Title -->
-            <a class="navbar-brand" href="{% url 'home' %}">GIS - APP</a>
+            </div>                        
         </div>
+        <!-- Brand / Title -->
+        
     </nav>
 
     <!-- Page Content -->
@@ -38,7 +37,8 @@
     {% block content %}{% endblock %}
 
     <!-- Add Bootstrap JS + Popper -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
