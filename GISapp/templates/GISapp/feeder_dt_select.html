@@ -1,89 +1,136 @@
 {% extends "GISapp/base.html" %}
+
 {% block title %}DTs List{% endblock %}
+
 {% block style %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
 {% endblock %}
 
 {% block content %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <div class="container mt-4">
     <h2 class="text-center">Feeder and DT Selection</h2>
 
+    <form method="post" id="selectForm" class="form-inline justify-content-center mb-3">
+        {% csrf_token %}
+        
+        <select name="feeder" id="feeder" {% if var_value == 'Y' %} disabled {% endif %} class="form-control mr-2" required>
+            <option value="">--Select Feeder--</option>
+            {% for f in feeders %}
+                <option value="{{ f.id }}" {% if f.id == selected_feeder_id %} selected {% endif %}>{{ f.name }}</option>
+            {% endfor %}
+        </select>
 
-<form method="post" id="selectForm" class="form-inline justify-content-center mb-3">
-    {% csrf_token %}
-    
-    <select name="feeder" id="feeder" {% if var_value == 'Y' %} disabled {% endif %}  class="form-control mr-2" required>
-        <option value="">--Select Feeder--</option>
-        {% for f in feeders %}
-            <option value="{{ f.id }}" {% if f.id == selected_feeder_id %} selected {% endif %}>{{ f.name }}</option>
-        {% endfor %}
-    </select>
+        <select name="dt" id="dt" {% if var_value == 'Y' %} disabled {% endif %} class="form-control mr-2" required>
+            <option value="">--Select DT--</option>
+            {% for dt in dts %}
+                <option value="{{ dt.id }}" {% if dt.id == selected_dt_id %} selected {% endif %}>{{ dt.name }} ({{ dt.capacity }} kVA)</option>
+            {% endfor %}
+        </select>
 
-    
-    <select name="dt" id="dt" {% if var_value == 'Y' %} disabled {% endif %}  class="form-control mr-2" required>
-        <option value="">--Select DT--</option>
-        {% for dt in dts %}
-            <option value="{{ dt.id }}" {% if dt.id == selected_dt_id %} selected {% endif %}>{{ dt.name }} ({{ dt.capacity }} kVA)</option>
-        {% endfor %}
-    </select>
+        <button type="submit" class="btn btn-primary" name="set_reset" id="setResetButton">
+            {% if var_value == 'Y' %} RESET {% else %} SET {% endif %}
+        </button>
+    </form>
 
-    <button type="submit" class="btn btn-primary" name="set_reset" id="setResetButton">
-        {% if var_value == 'Y' %} RESET {% else %} SET {% endif %}
-    </button>
-</form>
-
-{% if var_value == 'Y' %}
-<hr />
-<!-- Form to input StartPoint and EndPoint -->
-<div container class="mt-4">
-<form method="post" id="coordsForm" class=" justify-content-center mb-3">
-    {% csrf_token %}
-    <input type="hidden" name="feeder" value="{{ selected_feeder_id }}">
-    <input type="hidden" name="dt" value="{{ selected_dt_id }}">
-
-    <label>StartPoint Latitude:</label>
-    <input type="number" step="0.000001" name="start_lat" required />
-    <label>StartPoint Longitude:</label>
-    <input type="number" step="0.000001" name="start_lng" required />
-
-    <br/><br/>
-
-    <label>EndPoint Latitude:</label>
-    <input type="number" step="0.000001" name="end_lat" required />
-    <label>EndPoint Longitude:</label>
-    <input type="number" step="0.000001" name="end_lng" required />
-
-    <br/><br/>
-    <button type="submit" name="submit_coords">Submit</button>
-</form>
+    {% if var_value == 'Y' %}
+    <hr />
+    <!-- Form to input StartPoint and EndPoint -->
+    <div container class="mt-4">
+        <form method="post" id="coordsForm" class="justify-content-center mb-3">
+            {% csrf_token %}
+            <input type="hidden" name="start_lat" id="start_lat" />
+            <input type="hidden" name="start_lng" id="start_lng" />
+            <input type="hidden" name="end_lat" id="end_lat" />
+            <input type="hidden" name="end_lng" id="end_lng" />
+            <button type="button" id="btnStart" onclick="recordStart()" {% if var_value == 'Y' %}{{ '' }}{% else %}disabled{% endif %}>Record Start Coordinates</button>
+            <button type="button" id="btnEnd" onclick="recordEnd()" disabled>Record End Coordinates</button>
+            <button type="submit" name="submit_coords" id="submitBtn" disabled>Submit Coordinates</button>
+        </form>
+    </div>
+    {% endif %}
 </div>
-</div>
-{% endif %}
 
+<!-- Load jQuery first -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
-// Fetch DTs dynamically when feeder changes (only if variable is 'N')
-$('#feeder').change(function() {
-    var feederId = $(this).val();
-    if (!feederId) {
-        $('#dt').html('<option value="">--Select DT--</option>');
-        return;
-    }
-    $.ajax({
-        url: "{% url 'ajax_get_dts' %}",
-        data: {
-            'feeder_id': feederId
-        },
-        dataType: 'json',
-        success: function(data) {
-            let options = '<option value="">--Select DT--</option>';
-            $.each(data, function(index, dt) {
-                options += `<option value="${dt.id}">${dt.name} (${dt.capacity} kVA)</option>`;
-            });
-            $('#dt').html(options);
+$(document).ready(function() {
+    // Listen for both 'change' and 'touchstart' for better mobile compatibility
+    $('#feeder').on('change', function() {
+        var feederId = $(this).val();
+        if (!feederId) {
+            $('#dt').html('<option value="">--Select DT--</option>');
+            return;
         }
+        $.ajax({
+            url: "{% url 'ajax_get_dts' %}",
+            data: {
+                'feeder_id': feederId
+            },
+            dataType: 'json',
+            success: function(data) {
+                let options = '<option value="">--Select DT--</option>';
+                $.each(data, function(index, dt) {
+                    options += `<option value="${dt.id}">${dt.name} (${dt.capacity} kVA)</option>`;
+                });
+                $('#dt').html(options);
+                $('#dt').trigger('change');
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX error:', status, error);
+            }
+        });
     });
 });
 </script>
+<script>
+// Temporary storage for coordinates
+let startCoords = null;
+
+function recordStart() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(position => {
+      const lat = position.coords.latitude.toFixed(6);
+      const lng = position.coords.longitude.toFixed(6);
+      startCoords = {lat, lng};
+      document.getElementById('start_lat').value = lat;
+      document.getElementById('start_lng').value = lng;
+      
+      // Disable start button, enable end button
+      document.getElementById('btnStart').disabled = true;
+      document.getElementById('btnEnd').disabled = false;
+      
+      alert(`Start coordinates recorded:\nLatitude: ${lat}\nLongitude: ${lng}`);
+    }, () => {
+      alert('Unable to retrieve your location.');
+    });
+  } else {
+    alert('Geolocation is not supported by your browser.');
+  }
+}
+
+function recordEnd() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(position => {
+      const lat = position.coords.latitude.toFixed(6);
+      const lng = position.coords.longitude.toFixed(6);
+      document.getElementById('end_lat').value = lat;
+      document.getElementById('end_lng').value = lng;
+      
+      // Disable end button and enable submit button
+      document.getElementById('btnEnd').disabled = true;
+      document.getElementById('submitBtn').disabled = false;
+      
+      alert(`End coordinates recorded:\nLatitude: ${lat}\nLongitude: ${lng}\nNow submit the form.`);
+    }, () => {
+      alert('Unable to retrieve your location.');
+    });
+  } else {
+    alert('Geolocation is not supported by your browser.');
+  }
+}
+</script>
+
 
 {% endblock %}
